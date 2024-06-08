@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div>
+    <div id="chat-box" class="bg-light p-3 mb-3 rounded">
+        <blockquote style="border-left: 4px solid #43a047;">Toody: Hi am I Today! How can I help you today?</blockquote>
+    </div>
+    <progress id="progress-bar" style="display: none"></progress>
+    <div class="input-group">
+        <input id="chat-input" type="text" class="form-control" placeholder="Type your message...">
+        <div class="input-group-append">
+            <button id="send-button" class="btn btn-primary">Send</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+$(function() {
+
+    $('#chat-input').keypress(function(e) {
+        if(e.which == 13) { // 13 is the Enter key
+            $('#send-button').click();
+        }
+    });
+
+    $('#send-button').click(function() {
+        var message = $('#chat-input').val().trim();
+        if (message !== '') {
+            $('#chat-box').append('<blockquote style="border-left: 4px solid dodgerblue;">User: ' + message + '</blockquote>');
+            $('#chat-input').val('');
+            $('#progress-bar').show();
+            // Use AJAX to send the input to the server and get a response
+            $.ajax({
+                url: '/chat',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ message }),
+                success: function(data) {
+                    $('#chat-box').append('<blockquote style="border-left: 4px solid #43a047;">Bot: ' + data.response + '</blockquote>');
+                    $('#progress-bar').hide();
+                },
+                error: function() {
+                    $('#chat-box').append('<blockquote style="border-left: 4px solid red;">Bot: Sorry, I am not able to respond at the moment.</blockquote>');
+                    $('#progress-bar').hide();
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

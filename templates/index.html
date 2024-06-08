@@ -20,7 +20,7 @@
                     <input type="checkbox" class="completed-checkbox" {% if todo.isCompleted %} checked {% endif %}/>
                     <div>
                         <strong>{{ todo.title }}</strong>
-                        <p style="font-size: small;">{{ todo.description }}</p>
+                        <p style="font-size: small;">{{ todo.id }} &middot; {{ todo.description }}</p>
                     </div>
                 </div>
                 <button class="delete-btn" style="max-width: fit-content;" >Delete</button>

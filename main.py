@@ -1,11 +1,15 @@
 import os
 from flask import Flask, request, render_template, jsonify
 from prisma import Prisma
+import google.generativeai as genai
+import marko
+from tools.tools import get_todos, add_todo, update_todo, delete_todo
 
 # Initialize Prisma client
 db = Prisma()
 db.connect()
 
+genai.configure(api_key=os.getenv("API_KEY"))
 app = Flask(__name__)
 app.debug = True
 
@@ -14,28 +18,24 @@ def index():
     todos = db.todo.find_many()
     return render_template("index.html", todos=todos)
 
-@app.route('/todo', methods=['POST'])
-def add_todo():
-    title = request.form.get('title')
-    description = request.form.get('description')
+model = genai.GenerativeModel(
+    model_name="gemini-1.5-flash",
+    tools=[get_todos, add_todo, update_todo, delete_todo],
+)
 
-    if title:
-        db.todo.create({
-            'title': title,
-            'description': description,
-        })
-    return jsonify({"status": "success"})
+model_chat = model.start_chat(enable_automatic_function_calling=True)
 
-@app.route('/todo/<id>', methods=['DELETE'])
-def delete_todo(id):
-    db.todo.delete(where={"id": id})
-    return jsonify({"status": "success"})
-
-@app.route('/todo/<id>', methods=['PATCH'])
-def update_todo(id):
-    is_completed = request.json.get('isCompleted')
-    db.todo.update(where={"id": id}, data={"isCompleted": is_completed})
-    return jsonify({"status": "success"})
+@app.route('/chat', methods=['GET', 'POST'])
+def chat():
+    if request.method == "GET":
+        return render_template("chat.html")
+    else:
+        data = request.json
+        message = data["message"]
+        response = model_chat.send_message(message)
+        print("Message: ", message)
+        print("Response: ", response.text)
+        return jsonify({"response": marko.convert(response.text)})
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
