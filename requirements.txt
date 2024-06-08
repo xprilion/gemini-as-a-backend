@@ -1,0 +1,5 @@
+flask
+flask-cors
+marko
+google-generativeai
+prisma
