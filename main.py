@@ -1,48 +1,47 @@
 import os
-from flask import Flask, request, Response, g, render_template, jsonify
-import marko
+from flask import Flask, request, render_template, jsonify
+from prisma import Prisma
 import google.generativeai as genai
-import json
+import marko
+
+# Initialize Prisma client
+db = Prisma()
+db.connect()
 
 genai.configure(api_key=os.getenv("API_KEY"))
 
 app = Flask(__name__)
 app.debug = True
 
-config = {
-  'temperature': 0,
-  'top_k': 20,
-  'top_p': 0.9,
-  'max_output_tokens': 500
-}
-
-safety_settings = [
-  {
-    "category": "HARM_CATEGORY_HARASSMENT",
-    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-  },
-  {
-    "category": "HARM_CATEGORY_HATE_SPEECH",
-    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-  },
-  {
-    "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-  },
-  {
-    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-  }
-]
-
-model = genai.GenerativeModel(model_name="gemini-pro-vision",
-                              generation_config=config,
-                              safety_settings=safety_settings)
-
+model = genai.GenerativeModel(model_name="gemini-pro-vision")
 
 @app.route('/', methods=['GET'])
-def hello_world():
-    return render_template("chat.html")
+def index():
+    todos = db.todo.find_many()
+    return render_template("index.html", todos=todos)
+
+@app.route('/todo', methods=['POST'])
+def add_todo():
+    title = request.form.get('title')
+    description = request.form.get('description')
+
+    if title:
+        db.todo.create({
+            'title': title,
+            'description': description,
+        })
+    return jsonify({"status": "success"})
+
+@app.route('/todo/<id>', methods=['DELETE'])
+def delete_todo(id):
+    db.todo.delete(where={"id": id})
+    return jsonify({"status": "success"})
+
+@app.route('/todo/<id>', methods=['PATCH'])
+def update_todo(id):
+    is_completed = request.json.get('isCompleted')
+    db.todo.update(where={"id": id}, data={"isCompleted": is_completed})
+    return jsonify({"status": "success"})
 
 @app.route('/chat', methods=['POST'])
 def chat():

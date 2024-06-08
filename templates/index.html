@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div>
+
+    <form id="todo-form">
+        <div>
+            <input type="text" name="title" placeholder="Title" required>
+        </div>
+        <div>
+            <textarea name="description" placeholder="Description"></textarea>
+        </div>
+        <button type="submit">Add To-Do</button>
+    </form>
+
+    <ul id="todo-list" style="padding: 0;">
+        {% for todo in todos %}
+            <li data-id="{{ todo.id }}" style="padding: 1rem; border: 1px dashed; display: flex; flex-direction: row; justify-content: space-between;">
+                <div style="display: flex; flex-direction: row; justify-content: space-between;">
+                    <input type="checkbox" class="completed-checkbox" {% if todo.isCompleted %} checked {% endif %}/>
+                    <div>
+                        <strong>{{ todo.title }}</strong>
+                        <p style="font-size: small;">{{ todo.description }}</p>
+                    </div>
+                </div>
+                <button class="delete-btn" style="max-width: fit-content;" >Delete</button>
+            </li>
+        {% endfor %}
+    </ul>
+    
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+$(function() {
+    $('#todo-form').submit(function(e) {
+        e.preventDefault();
+
+        $.post('/todo', $(this).serialize(), function(data) {
+            if (data.status === 'success') {
+                location.reload();
+            }
+        });
+    });
+
+    $('.delete-btn').click(function() {
+        const id = $(this).closest('li').data('id');
+
+        $.ajax({
+            url: '/todo/' + id,
+            type: 'DELETE',
+            success: function(data) {
+                if (data.status === 'success') {
+                    location.reload();
+                }
+            }
+        });
+    });
+
+    $('.completed-checkbox').change(function() {
+        const id = $(this).closest('li').data('id');
+        const isCompleted = $(this).is(':checked');
+
+        $.ajax({
+            url: '/todo/' + id,
+            type: 'PATCH',
+            contentType: 'application/json',
+            data: JSON.stringify({ isCompleted: isCompleted }),
+            success: function(data) {
+                if (data.status === 'success') {
+                    location.reload();
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
