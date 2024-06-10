@@ -25,17 +25,16 @@ model = genai.GenerativeModel(
 
 model_chat = model.start_chat(enable_automatic_function_calling=True)
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET'])
+def home():
+    return render_template("chat.html")
+    
+@app.route('/chat', methods=['POST'])
 def chat():
-    if request.method == "GET":
-        return render_template("chat.html")
-    else:
-        data = request.json
-        message = data["message"]
-        response = model_chat.send_message(message)
-        print("Message: ", message)
-        print("Response: ", response.text)
-        return jsonify({"response": marko.convert(response.text)})
+    data = request.json
+    message = data["message"]
+    response = model_chat.send_message(message)
+    return jsonify({"response": marko.convert(response.text)})
 
 if __name__ == '__main__':
     debug_mode = os.environ.get("ENVIRONMENT", "prod") == "dev"
