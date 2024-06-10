@@ -13,10 +13,10 @@ genai.configure(api_key=os.getenv("API_KEY"))
 app = Flask(__name__)
 app.debug = True
 
-@app.route('/', methods=['GET'])
-def index():
+@app.route('/app', methods=['GET'])
+def traditional():
     todos = db.todo.find_many()
-    return render_template("index.html", todos=todos)
+    return render_template("app.html", todos=todos)
 
 model = genai.GenerativeModel(
     model_name="gemini-1.5-flash",
@@ -25,7 +25,7 @@ model = genai.GenerativeModel(
 
 model_chat = model.start_chat(enable_automatic_function_calling=True)
 
-@app.route('/chat', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def chat():
     if request.method == "GET":
         return render_template("chat.html")
@@ -38,4 +38,5 @@ def chat():
         return jsonify({"response": marko.convert(response.text)})
 
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+    debug_mode = os.environ.get("ENVIRONMENT", "prod") == "dev"
+    app.run(debug=debug_mode, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
