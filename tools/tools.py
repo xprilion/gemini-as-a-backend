@@ -29,6 +29,39 @@ def get_todos():
         })
     return result
 
+
+def find_todo_by_title_or_description(title_or_description: str):
+    """
+    Retrieves the details of any todo by using its title or description
+
+    Args:
+        title_or_description (str): The approxiate title or the description of the to-do item. (Required)
+
+    Returns:
+        todo: A todo dict which is closest matching to the todo title or description
+    """
+    todos = db.todo.find_many(
+        where={
+            'OR': [
+                {'title': {'contains': title_or_description}},
+                {'content': {'contains': title_or_description}},
+            ]
+        }
+    )
+
+    result = []
+
+    for todo in todos:
+        print(todo)
+        result.append({
+            "id": todo.id,
+            "title": todo.title,
+            "description": todo.description,
+            "isCompleted": todo.isCompleted,
+        })
+    return result
+
+
 def add_todo(title: str, description: str):
     """
     Adds a new to-do item to the database.

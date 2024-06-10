@@ -3,7 +3,7 @@ from flask import Flask, request, render_template, jsonify
 from prisma import Prisma
 import google.generativeai as genai
 import marko
-from tools.tools import get_todos, add_todo, update_todo, delete_todo
+from tools.tools import get_todos, add_todo, update_todo, delete_todo, find_todo_by_title_or_description
 
 # Initialize Prisma client
 db = Prisma()
@@ -20,7 +20,7 @@ def index():
 
 model = genai.GenerativeModel(
     model_name="gemini-1.5-flash",
-    tools=[get_todos, add_todo, update_todo, delete_todo],
+    tools=[get_todos, add_todo, update_todo, delete_todo, find_todo_by_title_or_description],
 )
 
 model_chat = model.start_chat(enable_automatic_function_calling=True)
